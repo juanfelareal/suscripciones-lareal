@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Repeat, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react'
 
@@ -17,27 +18,23 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/callback/credentials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false
       })
 
-      if (res.ok) {
-        router.push('/dashboard')
-      } else {
+      if (result?.error) {
         setError('Email o contraseña incorrectos')
+      } else if (result?.ok) {
+        router.push('/admin')
+        router.refresh()
       }
     } catch (err) {
       setError('Error al iniciar sesión')
     } finally {
       setLoading(false)
     }
-  }
-
-  // Para demo, login directo
-  const handleDemoLogin = () => {
-    router.push('/dashboard')
   }
 
   return (
@@ -54,7 +51,7 @@ export default function LoginPage() {
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h1 className="text-2xl font-bold text-dark text-center mb-2">
-            Bienvenido de vuelta
+            Bienvenido
           </h1>
           <p className="text-gray-500 text-center mb-8">
             Ingresa a tu cuenta para administrar tus suscripciones
@@ -102,45 +99,31 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
-                <span className="text-sm text-gray-600">Recordarme</span>
-              </label>
-              <a href="#" className="text-sm text-primary hover:underline">
-                ¿Olvidaste tu contraseña?
-              </a>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {loading ? 'Ingresando...' : 'Iniciar sesión'}
-              <ArrowRight className="w-5 h-5" />
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Ingresando...
+                </>
+              ) : (
+                <>
+                  Iniciar sesión
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </form>
-
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <button
-              onClick={handleDemoLogin}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-dark py-3 rounded-xl font-medium transition"
-            >
-              🎮 Entrar con cuenta demo
-            </button>
-          </div>
-
-          <p className="text-center text-gray-500 mt-6">
-            ¿No tienes cuenta?{' '}
-            <a href="/registro" className="text-primary font-medium hover:underline">
-              Crear cuenta gratis
-            </a>
-          </p>
         </div>
 
         <p className="text-center text-gray-400 text-sm mt-6">
-          Un producto de <a href="https://lareal.com.co" className="text-primary hover:underline">La Real</a>
+          Plataforma de suscripciones por{' '}
+          <a href="https://lareal.com.co" className="text-primary hover:underline">
+            LA REAL
+          </a>
         </p>
       </div>
     </div>

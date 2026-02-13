@@ -1,17 +1,7 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
-
-// Usuarios de ejemplo (en producción: base de datos)
-const users = [
-  {
-    id: '1',
-    email: 'demo@lareal.com.co',
-    password: 'demo123', // En producción: hash con bcrypt
-    name: 'Mi Gimnasio Fit',
-    businessName: 'Gimnasio Fitness Center',
-    plan: 'pro'
-  }
-]
+import bcrypt from 'bcryptjs'
+import { supabaseAdmin } from './supabase'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -26,17 +16,59 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null
         }
 
-        const user = users.find(u => u.email === credentials.email)
-        
-        if (!user || user.password !== credentials.password) {
+        const email = credentials.email as string
+        const password = credentials.password as string
+
+        // Buscar usuario en la base de datos
+        const { data: user, error } = await supabaseAdmin
+          .from('merchant_users')
+          .select(`
+            id,
+            email,
+            password_hash,
+            name,
+            role,
+            is_active,
+            merchant:merchants(
+              id,
+              name,
+              slug,
+              gateway,
+              subscription_status
+            )
+          `)
+          .eq('email', email)
+          .eq('is_active', true)
+          .single()
+
+        if (error || !user) {
+          console.log('User not found:', email)
           return null
         }
+
+        // Verificar contraseña
+        const isValid = await bcrypt.compare(password, user.password_hash)
+
+        if (!isValid) {
+          console.log('Invalid password for:', email)
+          return null
+        }
+
+        // Actualizar último login
+        await supabaseAdmin
+          .from('merchant_users')
+          .update({ last_login_at: new Date().toISOString() })
+          .eq('id', user.id)
 
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          businessName: user.businessName
+          role: user.role,
+          merchantId: (user.merchant as any)?.id,
+          merchantName: (user.merchant as any)?.name,
+          merchantSlug: (user.merchant as any)?.slug,
+          gateway: (user.merchant as any)?.gateway
         }
       }
     })
@@ -44,18 +76,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: '/login',
   },
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 días
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.businessName = (user as any).businessName
+        token.id = user.id
+        token.role = (user as any).role
+        token.merchantId = (user as any).merchantId
+        token.merchantName = (user as any).merchantName
+        token.merchantSlug = (user as any).merchantSlug
+        token.gateway = (user as any).gateway
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).businessName = token.businessName
+        (session.user as any).id = token.id
+        ;(session.user as any).role = token.role
+        ;(session.user as any).merchantId = token.merchantId
+        ;(session.user as any).merchantName = token.merchantName
+        ;(session.user as any).merchantSlug = token.merchantSlug
+        ;(session.user as any).gateway = token.gateway
       }
       return session
     }
   }
 })
+
+// Helper para hashear contraseñas
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 10)
+}
+
+// Helper para verificar contraseñas
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash)
+}
