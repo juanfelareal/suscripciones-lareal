@@ -1,0 +1,72 @@
+{
+  "merchant": {
+    "id": "tranki_gratu",
+    "name": "Tranki",
+    "businessName": "GRATU SAS",
+    "email": "hola@gratu.co",
+    "gateway": "payu",
+    "webhookUrl": "https://tranki.gratu.co/api/webhooks/suscripciones"
+  },
+  "plans": [
+    {
+      "id": "tranki_mensual",
+      "name": "Tranki",
+      "description": "Para tomar el control de tu plata",
+      "price": 19900,
+      "currency": "COP",
+      "interval": "monthly",
+      "features": [
+        "Dashboard con todo tu dinero en una pantalla",
+        "Funciona en celular Y computador (sincronizado)",
+        "Cuentas bancarias ilimitadas",
+        "Categorías personalizadas con iconos",
+        "Presupuestos mensuales con alertas",
+        "Metas de ahorro con seguimiento",
+        "Método Snowball para salir de deudas",
+        "Exportar todo a Excel/CSV",
+        "30 scans de IA al mes"
+      ]
+    },
+    {
+      "id": "tranki_pro_mensual",
+      "name": "Tranki Pro",
+      "description": "Para dominar tus finanzas con IA",
+      "price": 49900,
+      "currency": "COP",
+      "interval": "monthly",
+      "popular": true,
+      "features": [
+        "Todo lo del plan Tranki",
+        "Scans de IA ILIMITADOS",
+        "Reporte mensual generado por IA",
+        "Alertas inteligentes de gastos inusuales",
+        "Predicción de gastos del próximo mes"
+      ]
+    },
+    {
+      "id": "tranki_pro_anual",
+      "name": "Tranki Pro Anual",
+      "description": "4 meses gratis",
+      "price": 399900,
+      "currency": "COP",
+      "interval": "yearly",
+      "features": [
+        "Todo lo de Tranki Pro",
+        "4 meses gratis (pagas 8, obtienes 12)"
+      ]
+    }
+  ],
+  "emails": {
+    "welcome": true,
+    "payment_success": true,
+    "payment_failed": true,
+    "renewal_reminder": true,
+    "cancellation": true,
+    "reminder_days_before": 3
+  },
+  "billing": {
+    "retry_attempts": 3,
+    "retry_interval_days": 3,
+    "grace_period_days": 7
+  }
+}
